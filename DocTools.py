@@ -87,13 +87,13 @@ class DocTools():
 
     def summarize_doc(self):
 
-        pdf_summary_text = ""
+        pdf_summary_text = "\n"
         
         pdf_file = open(self.file_path, 'rb')
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         total_pages = len(pdf_reader.pages)
         
-        new_total_pages = int(input(f"Found {total_pages} pages in selected file. Type how many pages to summarize: "))
+        new_total_pages = int(input(f"\nFound {total_pages} pages in selected file. Type how many pages to summarize: "))
         while True:
             try:
                 if new_total_pages > total_pages:
@@ -135,7 +135,12 @@ class DocTools():
         print("File has been deleted")
         
     def exec_action(self):
+        print("-"*20)
+        print(f"--Action Selection--")
+        print("-"*20)
+
         while True:
+            print("-"*20)
             print(f"Please select what action on \"{self.selected_file}\" should be performed (type the corresponding abbreviation):")
             print("""
             S - Summarize the document using OpenAI
@@ -149,6 +154,9 @@ class DocTools():
                 selected_action = selected_action.lower()
                 if selected_action == 's':
                     print('\n')
+                    print("-"*(len(self.selected_file)+12))
+                    print(f"--{self.selected_file} Summary--")
+                    print("-"*(len(self.selected_file)+12))
                     print(self.summarize_doc())
                     continue
                 if selected_action == 'e':
