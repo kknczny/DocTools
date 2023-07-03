@@ -27,7 +27,9 @@ class DocTools():
                 if os.path.isfile(os.path.join(self.path, file)) and \
                 file.split(".")[1] in self.files_extensions:
                     files_list[assignment_no] = file
-                assignment_no =+ 1
+                    assignment_no += 1
+                else:
+                    continue
         except IndexError:
             pass
         return files_list
