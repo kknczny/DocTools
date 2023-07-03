@@ -12,15 +12,21 @@ class DocTools():
             path = os.getcwd()
         self.path = path
         self.files_extensions = ['pdf']
+        print("Welcome to DocTools")
+        self.select_file()
+        
 
     def list_files(self):
         files_list = {}
         assignment_no = 1
-        for file in os.listdir(self.path):
-            if os.path.isfile(os.path.join(self.path, file)) and \
-            file.split(".")[1] in self.files_extensions:
-                files_list[assignment_no] = file
-            assignment_no =+ 1
+        try:
+            for file in os.listdir(self.path):
+                if os.path.isfile(os.path.join(self.path, file)) and \
+                file.split(".")[1] in self.files_extensions:
+                    files_list[assignment_no] = file
+                assignment_no =+ 1
+        except IndexError:
+            pass
         return files_list
 
     def summarize_doc():
@@ -47,21 +53,60 @@ class DocTools():
     def list_files_with_summary():
         pass
 
-    def run(self):
+    def select_file(self):
 
-        new_path = input(f"Welcome to DocTools. The currently set path is {self.path}. If needed, please input another path or 'y' to proceed: ")
-        if new_path.lower() != 'y':
-            self.path = new_path
-
+        while True:
+            new_path = input(f"The currently set path is {self.path}. If needed, please input another path or 'y' to proceed: ")
+            if new_path.lower() == 'y':
+                break
+            elif new_path.lower() != 'y' and os.path.exists(new_path):
+                self.path = new_path
+                break
+            else:
+                print("Invalid path provided.")
+                continue
+            
         try:
             if self.path.split(".")[1] in self.files_extensions:
-                files_list = {1: self.path}
-                print(files_list)
-        except KeyError:
-            files_list = self.list_files()
-            print(files_list)
+                FileProvided = True
+        except IndexError:
+                FileProvided = False
 
-        self.list_files()
+        while True:
+            if FileProvided:
+                files_list = {1: self.path}
+                selected_number = 1
+                selected_file = files_list[selected_number]
+                break
+            else:
+                try:
+                    files_list = self.list_files()
+                    print("Which file you want to select?")
+                    print(files_list)
+                    selected_number = int(input(f"Please type assignment number: "))
+                    selected_file = files_list[selected_number]
+                    break
+                except ValueError:
+                    print("Provided value is not an integer.")
+                    continue
+                except KeyError:
+                    print("Provided assignment number out of range.")
+                    continue
+            
+        self.selected_file = selected_file
+        print("Selected file is:")
+        print(self.selected_file)
+        
+
+    def select_action():
+        print(f"Please select what action on \"{self.selected_file}\" should be performed (type the corresponding assginment letter/symbol):")
+        print("""
+        S - Summarize the document using OpenAI
+        E - Extract relevant tables and return them as DataFrames (feature not implemented yet)
+        D - Delete the File
+        . - Return to beginning
+        """)
+        input("Action to be performed: ")
         # path can be provided either as argument with execution of python file, or that will be the first input after running the file
 
         # if provided path ends with one of the extensions, this is a single file, hence we are not listing the contents.
@@ -75,4 +120,3 @@ class DocTools():
 
 if __name__ == "__main__":
     runner = DocTools("/Users/kuba/Downloads/")
-    print(runner.run())
