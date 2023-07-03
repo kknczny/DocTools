@@ -1,6 +1,6 @@
 import os
 import PyPDF2
-import re
+import sys
 import openai
 from dotenv import load_dotenv
 
@@ -14,7 +14,6 @@ class DocTools():
         self.files_extensions = ['pdf']
         print("Welcome to DocTools")
         self.select_file()
-        
 
     def list_files(self):
         files_list = {}
@@ -29,12 +28,29 @@ class DocTools():
             pass
         return files_list
 
-    def summarize_doc():
+    def summarize_doc(self):
+
         pdf_summary_text = ""
-        # pdf_file_path = "/Users/kuba/Downloads/Wprowadzenie-do-chmury.pdf"
+        pdf_file_path = self.path+self.selected_file
         pdf_file = open(pdf_file_path, 'rb')
         pdf_reader = PyPDF2.PdfReader(pdf_file)
-        for page_num in range(len(pdf_reader.pages)):
+        total_pages = len(pdf_reader.pages)
+        
+        new_total_pages = int(input(f"Found {total_pages} pages in selected file. Type how many pages to summarize: "))
+        while True:
+            try:
+                if new_total_pages > total_pages:
+                    print(f"Provided number {new_total_pages} is greater than total number of pages - {total_pages}. Program will analyse all {total_pages} pages.")
+                    break
+                else:
+                    total_pages = new_total_pages
+                    break
+            except ValueError:
+                print("Provided input is not valid integer.")
+                continue
+
+        for page_num in range(total_pages):
+            sys.stdout.write(f"\rAnalyzing page {page_num} out of {total_pages}...   \r")
             page_text = pdf_reader.pages[page_num].extract_text().lower()
 
             response = openai.ChatCompletion.create(
@@ -45,16 +61,22 @@ class DocTools():
                     ],
                 )
             
-        page_summary = response["choices"][0]["message"]["content"]
-        pdf_summary_text+=page_summary + "\n"
-        pdf_file.close()
-        return 
+            
+            sys.stdout.flush()
+            page_summary = response["choices"][0]["message"]["content"]
+            pdf_summary_text+=page_summary + "\n"
 
-    def list_files_with_summary():
+        pdf_file.close()
+        return pdf_summary_text
+    
+    def extract_doc_tables(self):
+        print("Feature not yet implemented.")
+        pass
+
+    def delete_doc(self):
         pass
 
     def select_file(self):
-
         while True:
             new_path = input(f"The currently set path is {self.path}. If needed, please input another path or 'y' to proceed: ")
             if new_path.lower() == 'y':
@@ -96,17 +118,43 @@ class DocTools():
         self.selected_file = selected_file
         print("Selected file is:")
         print(self.selected_file)
-        
 
-    def select_action():
-        print(f"Please select what action on \"{self.selected_file}\" should be performed (type the corresponding assginment letter/symbol):")
-        print("""
-        S - Summarize the document using OpenAI
-        E - Extract relevant tables and return them as DataFrames (feature not implemented yet)
-        D - Delete the File
-        . - Return to beginning
-        """)
-        input("Action to be performed: ")
+        self.exec_action()
+        
+    def exec_action(self):
+        while True:
+            print(f"Please select what action on \"{self.selected_file}\" should be performed (type the corresponding abbreviation):")
+            print("""
+            S - Summarize the document using OpenAI
+            E - Extract relevant tables and return them as DataFrames (feature not implemented yet)
+            D - Delete the File
+            R - Return to beginning
+            Q - Quit
+            """)
+            selected_action = input("Action to be performed: ")
+            try:
+                selected_action = selected_action.lower()
+                if selected_action == 's':
+                    print(self.summarize_doc())
+                    continue
+                if selected_action == 'e':
+                    self.extract_doc_tables()
+                    continue
+                if selected_action == 'd':
+                    self.delete_doc()
+                    break
+                if selected_action == 'r':
+                    self.exec_action()
+                    break
+                if selected_action == 'q':
+                    break
+                else:
+                    print("Value unrecognized. Select corresponding abbreviation once again.")
+                    continue
+            except ValueError:
+                print("Value unrecognized. Select corresponding abbreviation once again.")
+                continue
+
         # path can be provided either as argument with execution of python file, or that will be the first input after running the file
 
         # if provided path ends with one of the extensions, this is a single file, hence we are not listing the contents.
