@@ -12,7 +12,11 @@ class DocTools():
             path = os.getcwd()
         self.path = path
         self.files_extensions = ['pdf']
-        print("Welcome to DocTools")
+        print("-"*23)
+        print("--Welcome to DocTools--")
+        print("-"*23)
+        print(f"Currently supported document types are:")
+        print(self.files_extensions)
         self.select_file()
 
     def list_files(self):
@@ -28,55 +32,10 @@ class DocTools():
             pass
         return files_list
 
-    def summarize_doc(self):
-
-        pdf_summary_text = ""
-        pdf_file_path = self.path+self.selected_file
-        pdf_file = open(pdf_file_path, 'rb')
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        total_pages = len(pdf_reader.pages)
-        
-        new_total_pages = int(input(f"Found {total_pages} pages in selected file. Type how many pages to summarize: "))
-        while True:
-            try:
-                if new_total_pages > total_pages:
-                    print(f"Provided number {new_total_pages} is greater than total number of pages - {total_pages}. Program will analyse all {total_pages} pages.")
-                    break
-                else:
-                    total_pages = new_total_pages
-                    break
-            except ValueError:
-                print("Provided input is not valid integer.")
-                continue
-
-        for page_num in range(total_pages):
-            sys.stdout.write(f"\rAnalyzing page {page_num} out of {total_pages}...   \r")
-            page_text = pdf_reader.pages[page_num].extract_text().lower()
-
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a helpful research assistant."},
-                    {"role": "user", "content": f"Summarize this: {page_text}"},
-                    ],
-                )
-            
-            
-            sys.stdout.flush()
-            page_summary = response["choices"][0]["message"]["content"]
-            pdf_summary_text+=page_summary + "\n"
-
-        pdf_file.close()
-        return pdf_summary_text
-    
-    def extract_doc_tables(self):
-        print("Feature not yet implemented.")
-        pass
-
-    def delete_doc(self):
-        pass
-
     def select_file(self):
+        print('\n'+"-"*22)
+        print("--Document Selection--")
+        print("-"*22)
         while True:
             new_path = input(f"The currently set path is {self.path}. If needed, please input another path or 'y' to proceed: ")
             if new_path.lower() == 'y':
@@ -99,14 +58,16 @@ class DocTools():
                 files_list = {1: self.path}
                 selected_number = 1
                 selected_file = files_list[selected_number]
+                self.file_path = selected_file
                 break
             else:
                 try:
                     files_list = self.list_files()
-                    print("Which file you want to select?")
+                    print("\nWhich file you want to select?")
                     print(files_list)
                     selected_number = int(input(f"Please type assignment number: "))
                     selected_file = files_list[selected_number]
+                    self.file_path = self.path+selected_file
                     break
                 except ValueError:
                     print("Provided value is not an integer.")
@@ -116,10 +77,60 @@ class DocTools():
                     continue
             
         self.selected_file = selected_file
-        print("Selected file is:")
-        print(self.selected_file)
+
+        print("\nSelected file is:")
+        print(f"--> {self.selected_file} <--")
 
         self.exec_action()
+
+    def summarize_doc(self):
+
+        pdf_summary_text = ""
+        
+        pdf_file = open(self.file_path, 'rb')
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        total_pages = len(pdf_reader.pages)
+        
+        new_total_pages = int(input(f"Found {total_pages} pages in selected file. Type how many pages to summarize: "))
+        while True:
+            try:
+                if new_total_pages > total_pages:
+                    print(f"Provided number {new_total_pages} is greater than total number of pages - {total_pages}. Program will analyse all {total_pages} pages.")
+                    break
+                else:
+                    total_pages = new_total_pages
+                    break
+            except ValueError:
+                print("Provided input is not valid integer.")
+                continue
+
+        for page_num in range(total_pages):
+            sys.stdout.write(f"\rAnalyzing page {page_num} out of {total_pages}...   \r")
+
+            page_text = pdf_reader.pages[page_num].extract_text().lower()
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful research assistant."},
+                    {"role": "user", "content": f"Summarize this: {page_text}"},
+                    ],
+                )
+            
+            sys.stdout.flush()
+            
+            page_summary = response["choices"][0]["message"]["content"]
+            pdf_summary_text+=page_summary + "\n"
+
+        pdf_file.close()
+        return pdf_summary_text
+    
+    def extract_doc_tables(self):
+        print("Feature not yet implemented.")
+        pass
+
+    def delete_doc(self):
+        os.remove(self.file_path)
+        print("File has been deleted")
         
     def exec_action(self):
         while True:
@@ -127,14 +138,15 @@ class DocTools():
             print("""
             S - Summarize the document using OpenAI
             E - Extract relevant tables and return them as DataFrames (feature not implemented yet)
-            D - Delete the File
-            R - Return to beginning
+            D - Delete the document file
+            R - Return to document selection
             Q - Quit
             """)
-            selected_action = input("Action to be performed: ")
+            selected_action = input("Action to be performed:")
             try:
                 selected_action = selected_action.lower()
                 if selected_action == 's':
+                    print('\n')
                     print(self.summarize_doc())
                     continue
                 if selected_action == 'e':
@@ -144,7 +156,7 @@ class DocTools():
                     self.delete_doc()
                     break
                 if selected_action == 'r':
-                    self.exec_action()
+                    self.select_file()
                     break
                 if selected_action == 'q':
                     break
