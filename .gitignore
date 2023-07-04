@@ -1,1 +1,4 @@
 __pycache__/DocTools.cpython-311.pyc
+.venv
+.env
+notes.txt
