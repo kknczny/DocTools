@@ -5,6 +5,7 @@ import openai
 from dotenv import load_dotenv
 
 load_dotenv(verbose=True)
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class DocTools():
     def __init__(self, path=None):
@@ -12,12 +13,6 @@ class DocTools():
             path = os.getcwd()
         self.path = path
         self.files_extensions = ['pdf']
-        print("-"*23)
-        print("--Welcome to DocTools--")
-        print("-"*23)
-        print(f"Currently supported document types are:")
-        print(self.files_extensions)
-        self.select_file()
 
     def list_files(self):
         files_list = {}
@@ -69,7 +64,7 @@ class DocTools():
                     print(files_list)
                     selected_number = int(input(f"Please type assignment number: "))
                     selected_file = files_list[selected_number]
-                    self.file_path = self.path+selected_file
+                    self.file_path = self.path+os.sep+selected_file
                     break
                 except ValueError:
                     print("Provided value is not an integer.")
@@ -134,6 +129,14 @@ class DocTools():
         os.remove(self.file_path)
         print("File has been deleted")
         
+    def run(self):
+        print("-"*23)
+        print("--Welcome to DocTools--")
+        print("-"*23)
+        print(f"Currently supported document types are:")
+        print(self.files_extensions)
+        self.select_file()
+        
     def exec_action(self):
         print("-"*20)
         print(f"--Action Selection--")
@@ -189,4 +192,5 @@ class DocTools():
 
 
 if __name__ == "__main__":
-    runner = DocTools("/Users/kuba/Downloads/")
+    runner = DocTools()
+    runner.run()
