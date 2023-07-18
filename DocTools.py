@@ -2,6 +2,7 @@ import os
 import PyPDF2
 import sys
 import openai
+import tabula
 from dotenv import load_dotenv
 
 load_dotenv(verbose=True)
@@ -121,9 +122,47 @@ class DocTools():
         pdf_file.close()
         return pdf_summary_text
     
+    def list_tables(self):
+        pdf_file = open(self.file_path, 'rb')
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        total_pages = len(pdf_reader.pages)
+        tables_list = {i+1: f"Table on page {i+1}" for i in range(total_pages)}
+        pdf_file.close()
+        return tables_list
+    
+    def select_table(self):
+        print('\n'+"-"*22)
+        print("--Table Selection--")
+        print("-"*22)
+        
+        tables_list = self.list_tables()
+        print("\nWhich table you want to select?")
+        print(tables_list)
+        
+        while True:
+            try:
+                selected_number = int(input(f"Please type table number: "))
+                selected_table = tables_list[selected_number]
+                self.table_page = selected_number
+                break
+            except ValueError:
+                print("Provided value is not an integer.")
+                continue
+            except KeyError:
+                print("Provided table number out of range.")
+                continue
+            
+        print("\nSelected table is:")
+        print(f"--> {selected_table} <--")
+        return self.table_page
+    
     def extract_doc_tables(self):
-        print("Feature not yet implemented.")
-        pass
+        table_page = self.select_table()  # user selects table (by page number)
+        tables = tabula.read_pdf(self.file_path, pages=table_page)
+        for i, table in enumerate(tables):
+            print(f"Table {i+1} on page {table_page}:")
+            print(table)
+        return tables
 
     def delete_doc(self):
         os.remove(self.file_path)
@@ -147,7 +186,7 @@ class DocTools():
             print(f"Please select what action on \"{self.selected_file}\" should be performed (type the corresponding abbreviation):")
             print("""
             S - Summarize the document using OpenAI
-            E - Extract relevant tables and return them as DataFrames (feature not implemented yet)
+            E - Extract relevant tables and return them as DataFrames
             D - Delete the document file
             R - Return to document selection
             Q - Quit
